@@ -5,38 +5,48 @@ from mist.client import MistClient
 
 DOCUMENTATION = '''
 ---
-module: mist_providers
-author: Chris Loukas <commixon@gmail.com>
-version_added: "1.7.1"
-short_description: Lists all available providers in the mist.io service
-requirements:
-  - mist.client
+author: "Chris Loukas <commixon@gmail.com>"
 description:
-  - Returns a list of all available providers that you can add and control through mist.io service
+  - "Returns a list of all available providers that you can add and control through mist.io service"
+module: mist_providers
 options:
-  mist_uri:
-    description:
-      - Url of the mist.io service. By default https://mist.io. But if you have a custom installtion of mist.io you can
-      provide the url here
-    required: false
-    default: https://mist.io
   mist_email:
     description:
-      - Email to login to the mist.io service. Leave it blank in case you have a custom installation of mist.io that does
-      not require login
+      - "Email to login to the mist.io service. Leave it blank in case you have a custom installation of mist.io that does not require login"
     required: false
   mist_password:
     description:
-      - Password to login to the mist.io service. Leave it blank in case you have a custom installation of mist.io that does
-      not require login
+      - "Password to login to the mist.io service. Leave it blank in case you have a custom installation of mist.io that does not require login"
+    required: false
+  mist_uri:
+    default: "https://mist.io"
+    description:
+      - "Url of the mist.io service. By default https://mist.io. But if you have a custom installtion of mist.io you can provide the url here"
     required: false
   provider:
-    description:
-      - By default == "all", which returns all supported providers by the mist.io service.
-      - You can explicitly set it to one of the choices to see only this provider-specific information
-    required: false
+    choices:
+      - ec2
+      - rackspace
+      - bare_metal
+      - gce
+      - openstack
+      - linode
+      - nephoscale
+      - digitalocean
+      - docker
+      - hpcloud
+      - softlayer
+      - all
     default: all
-    choices: ['ec2', 'rackspace', 'bare_metal', 'gce', 'openstack', 'linode', 'nephoscale', 'digitalocean', 'docker', 'hpcloud', 'softlayer', 'all']
+    description:
+      - "By default == \"all\", which returns all supported providers by the mist.io service."
+      - "You can explicitly set it to one of the choices to see only this provider-specific information"
+    required: false
+requirements:
+  - mist.client
+short_description: "Lists all available providers in the mist.io service"
+version_added: "1.7.1"
+
 '''
 
 EXAMPLES = '''
