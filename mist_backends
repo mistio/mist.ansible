@@ -1,0 +1,59 @@
+#!/usr/bin/env python
+from ansible.module_utils.basic import *
+
+from mist.client import MistClient
+
+CHANGED = False
+
+
+def init_client(mist_uri="https://mist.io", email=None, password=None):
+    client = MistClient(mist_uri, email, password)
+    return client
+
+
+def check_state(provider, client):
+    backend_state = 'absent'
+    backend_name = ''
+
+    for key in client.backends:
+        backend = client.backends[key]
+        if backend.info['provider'] == provider:
+            backend_state = 'present'
+            backend_name = backend.title
+            break
+
+    return backend_state
+
+
+def main():
+    CHANGED = False
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            provider=dict(required=True, type='str'),
+            state=dict(required=False, default='present', choices=['present', 'absent']),
+            enabled=dict(required=False, default=True, type='bool'),
+            name=dict(required=False, type='str'),
+            backend_key=dict(required=False, type='str'),
+            backend_secret=dict(required=False, type='str'),
+            tenant_name=dict(required=False, type='str'),
+            region=dict(required=False, type='str'),
+            api_url=dict(required=False, type='str'),
+            compute_endpoint=dict(required=False, type='str'),
+            machine_ip=dict(required=False, type='str'),
+            machine_key=dict(required=False, type='str'),
+            machine_user=dict(required=False, type='str'),
+            machine_port=dict(required=False, type='str'),
+            mist_uri=dict(default='https://mist.io', type='str'),
+            mist_email=dict(required=False, type='str'),
+            mist_password=dict(required=False, type='str'),
+        )
+    )
+
+    mist_uri = module.params.get('mist_uri')
+    mist_email = module.params.get('mist_email')
+    mist_password = module.params.get('mist_password')
+
+    client = init_client(mist_uri, mist_email, mist_password)
+
+    backend_state = check_state(module.params.get('provider'), client)
