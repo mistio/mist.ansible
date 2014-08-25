@@ -1,0 +1,112 @@
+#!/usr/bin/env python
+from ansible.module_utils.basic import *
+
+from mist.client import MistClient
+
+
+def init_client(mist_uri="https://mist.io", email=None, password=None):
+    client = MistClient(mist_uri, email, password)
+    return client
+
+
+def check_state(private, client):
+    key_state = 'absent'
+    key_name = None
+    if not client.keys:
+        return key_state, name
+
+    for key in client.keys:
+        if private.strip("\n") == client.keys[key].private:
+            key_state = 'present'
+            key_name = key
+            break
+
+    return key_state, key_name
+
+
+def remove_key(key_name, client):
+    key = client.keys[key_name]
+    key.delete()
+    return
+
+
+def add_key(key_name, private, client):
+    keys = client.keys
+    client.add_key(key_name, private.strip("\n"))
+    client.update_keys()
+    key = client.keys[key_name]
+
+    return key.info
+
+
+def main():
+    home_path = os.getenv('HOME')
+    save_path = os.path.join(home_path, '.ssh')
+
+    module = AnsibleModule(
+        argument_spec=dict(
+            mist_uri=dict(default='https://mist.io', type='str'),
+            mist_email=dict(required=False, type='str'),
+            mist_password=dict(required=False, type='str'),
+            key=dict(required=False, type='str'),
+            state=dict(required=False, type='str', choices=['present', 'absent']),
+            name=dict(required=False, type='str'),
+            auto_generate=dict(required=False, default=False, type='bool'),
+            save_locally=dict(required=False, default=False, type='bool'),
+            local_save_path=dict(required=False, default=save_path, type='str'),
+        )
+    )
+
+    mist_uri = module.params.get('mist_uri')
+    mist_email = module.params.get('mist_email')
+    mist_password = module.params.get('mist_password')
+
+    state = module.params.get('state')
+    auto_generate = module.params.get('auto_generate')
+    client = init_client(mist_uri, mist_email, mist_password)
+
+    #If not state and auto_generate then just list added keys
+    if not state and not auto_generate:
+        if client.keys:
+            keys = {}
+            for key in client.keys:
+                keys[key] = client.keys[key].info
+        else:
+            keys = {}
+        module.exit_json(changed=False, keys=keys)
+
+    if state:
+        key = module.params.get('key')
+        with open(key) as f:
+            private = f.read()
+
+        key_state, key_name = check_state(unicode(private), client)
+
+        if key_state == "present" and state == "present":
+            module.exit_json(changed=False, key=client.keys[key_name].info)
+        elif key_state == "present" and state == "absent":
+            remove_key(key_name, client)
+            module.exit_json(changed=True)
+        elif key_state == "absent" and state == "present":
+            name = module.params.get('name')
+            key_info = add_key(name, private=private, client=client)
+            module.exit_json(changed=True, key=key_info)
+        elif key_state == "absent" and state == "absent":
+            module.exit_json(changed=False)
+
+    if auto_generate:
+        private = client.generate_key()
+        name = module.params.get('name')
+        save_locally = module.params.get('save_locally')
+        local_save_path = module.params.get('local_save_path')
+
+        key_info = add_key(name, private, client)
+
+        if not save_locally:
+            module.exit_json(changed=True, key=key_info)
+        else:
+            with open(local_save_path, 'w') as f:
+                f.write(private)
+            module.exit_json(changed=True, key=key_info, path=local_save_path)
+
+main()

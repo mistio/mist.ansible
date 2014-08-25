@@ -149,7 +149,6 @@ def init_client(mist_uri="https://mist.io", email=None, password=None):
 
 def check_state(provider, client):
     backend_state = 'absent'
-    backend_name = ''
 
     for key in client.backends:
         backend = client.backends[key]
