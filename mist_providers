@@ -3,6 +3,62 @@ from ansible.module_utils.basic import *
 
 from mist.client import MistClient
 
+DOCUMENTATION = '''
+---
+module: mist_providers
+author: Chris Loukas <commixon@gmail.com>
+version_added: "1.7.1"
+short_description: Lists all available providers in the mist.io service
+requirements:
+  - mist.client
+description:
+  - Returns a list of all available providers that you can add and control through mist.io service
+options:
+  mist_uri:
+    description:
+      - Url of the mist.io service. By default https://mist.io. But if you have a custom installtion of mist.io you can
+      provide the url here
+    required: false
+    default: https://mist.io
+  mist_email:
+    description:
+      - Email to login to the mist.io service. Leave it blank in case you have a custom installation of mist.io that does
+      not require login
+    required: false
+  mist_password:
+    description:
+      - Password to login to the mist.io service. Leave it blank in case you have a custom installation of mist.io that does
+      not require login
+    required: false
+  provider:
+    description:
+      - By default == "all", which returns all supported providers by the mist.io service.
+      - You can explicitly set it to one of the choices to see only this provider-specific information
+    required: false
+    default: all
+    choices: ['ec2', 'rackspace', 'bare_metal', 'gce', 'openstack', 'linode', 'nephoscale', 'digitalocean', 'docker', 'hpcloud', 'softlayer', 'all']
+'''
+
+EXAMPLES = '''
+- name: List supported providers, simple case
+  mist_providers:
+    mist_email: your@email.com
+    mist_password: yourpassword
+  register: providers
+
+- name: List supported providers from custom_url
+  mist_providers:
+    mist_uri: http://localhost:8000
+  register: providers
+
+- name: List only ec2 provider options
+  mist_providers:
+    mist_email: your@email.com
+    mist_password: yourpassword
+    provider: ec2
+  register: providers
+'''
+
 
 def init_client(mist_uri="https://mist.io", email=None, password=None):
     client = MistClient(mist_uri, email, password)
