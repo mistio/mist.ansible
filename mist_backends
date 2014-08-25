@@ -3,8 +3,6 @@ from ansible.module_utils.basic import *
 
 from mist.client import MistClient
 
-CHANGED = False
-
 
 def init_client(mist_uri="https://mist.io", email=None, password=None):
     client = MistClient(mist_uri, email, password)
@@ -19,10 +17,40 @@ def check_state(provider, client):
         backend = client.backends[key]
         if backend.info['provider'] == provider:
             backend_state = 'present'
-            backend_name = backend.title
             break
 
     return backend_state
+
+
+def remove_backend(provider, client):
+    for key in client.backends:
+        backend = client.backends[key]
+        if backend.info['provider'] == provider:
+            backend.delete()
+            return
+
+
+def add_backend(client, module):
+    title = module.params.get('name')
+    provider = module.params.get('provider')
+    key = module.params.get('backend_key')
+    secret = module.params.get('backend_secret')
+    tenant_name = module.params.get('tenant_name')
+    region = module.params.get('region')
+    apiurl = module.params.get('api_url')
+    machine_ip = module.params.get('machine_ip')
+    machine_key = module.params.get('machine_key')
+    machine_user = module.params.get('machine_user')
+    compute_endpoint = module.params.get('compute_endpoint')
+    machine_port = module.params.get('machine_port')
+
+    client.add_backend(title, provider, key, secret, tenant_name, region, apiurl, machine_ip, machine_key, machine_user,
+                       compute_endpoint, machine_port)
+
+    client.update_backends()
+
+    backend = client.backends[title]
+    return backend.info
 
 
 def main():
@@ -32,7 +60,7 @@ def main():
         argument_spec=dict(
             provider=dict(required=True, type='str'),
             state=dict(required=False, default='present', choices=['present', 'absent']),
-            enabled=dict(required=False, default=True, type='bool'),
+            # enabled=dict(required=False, default=True, type='bool'),
             name=dict(required=False, type='str'),
             backend_key=dict(required=False, type='str'),
             backend_secret=dict(required=False, type='str'),
@@ -56,4 +84,23 @@ def main():
 
     client = init_client(mist_uri, mist_email, mist_password)
 
-    backend_state = check_state(module.params.get('provider'), client)
+    provider = module.params.get('provider')
+    backend_state = check_state(provider, client)
+    state = module.params.get('state')
+
+    if backend_state == "present" and state == "present":
+        CHANGED = False
+        module.exit_json(changed=CHANGED)
+    elif backend_state == "present" and state == "absent":
+        remove_backend(provider, client)
+        CHANGED = True
+        module.exit_json(changed=CHANGED)
+    elif backend_state == "absent" and state == "absent":
+        CHANGED = False
+        module.exit_json(changed=CHANGED)
+    elif backend_state == "absent" and state == "present":
+        CHANGED = True
+        backend_info = add_backend(client, module)
+        module.exit_json(changed=CHANGED, backend=backend_info)
+
+main()
