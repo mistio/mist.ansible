@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+from ansible.module_utils.basic import *
+
+from mist.client import MistClient
+
+
+def init_client(mist_uri="https://mist.io", email=None, password=None):
+    client = MistClient(mist_uri, email, password)
+    return client
+
+
+def supported_providers(client, provider):
+    providers = client.supported_providers
+
+    if provider == "all":
+        return providers
+    else:
+        chosen_providers = []
+        for prov in providers:
+            if provider in prov['provider']:
+                chosen_providers.append(prov)
+        return chosen_providers
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            mist_uri=dict(default='https://mist.io', type='str'),
+            mist_email=dict(required=False, type='str'),
+            mist_password=dict(required=False, type='str'),
+            provider=dict(required=False, default='all', type='str', choices=['ec2', 'rackspace', 'bare_metal', 'gce',
+                                                                              'openstack', 'linode', 'nephoscale',
+                                                                              'digitalocean', 'docker', 'hpcloud',
+                                                                              'softlayer', 'all'])
+        )
+    )
+
+    mist_uri = module.params.get('mist_uri')
+    mist_email = module.params.get('mist_email')
+    mist_password = module.params.get('mist_password')
+    provider = module.params.get('provider')
+
+    client = init_client(mist_uri, mist_email, mist_password)
+
+    module.exit_json(changed=True, supported_providers=supported_providers(client, provider))
+
+
+main()
