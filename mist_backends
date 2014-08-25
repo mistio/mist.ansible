@@ -99,6 +99,8 @@ requirements:
   - mist.client
 short_description: "Handle backends in the mist.io service"
 version_added: "1.7.1"
+notes:
+  - "Add more backend functionality, like enable/disable backend, alongside backend state"
 '''
 
 EXAMPLES = '''
@@ -223,10 +225,11 @@ def main():
     provider = module.params.get('provider')
     backend_state = check_state(provider, client)
     state = module.params.get('state')
+    title = module.params.get('name')
 
     if backend_state == "present" and state == "present":
         CHANGED = False
-        module.exit_json(changed=CHANGED)
+        module.exit_json(changed=CHANGED, backend=client.backends[title].info)
     elif backend_state == "present" and state == "absent":
         remove_backend(provider, client)
         CHANGED = True
