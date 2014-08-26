@@ -1,0 +1,34 @@
+#!/usr/bin/env python
+from ansible.module_utils.basic import *
+
+from mist.client import MistClient
+
+
+def init_client(mist_uri="https://mist.io", email=None, password=None):
+    client = MistClient(mist_uri, email, password)
+    return client
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            mist_uri=dict(default='https://mist.io', type='str'),
+            mist_email=dict(required=False, type='str'),
+            mist_password=dict(required=False, type='str'),
+            backend=dict(required=True, type='str'),
+        )
+    )
+
+    mist_uri = module.params.get('mist_uri')
+    mist_email = module.params.get('mist_email')
+    mist_password = module.params.get('mist_password')
+    backend = module.params.get('backend')
+
+    client = init_client(mist_uri, mist_email, mist_password)
+    back = client.backends[backend]
+    sizes = back.sizes
+
+    module.exit_json(changed=False, sizes=sizes)
+
+
+main()
