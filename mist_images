@@ -2,3 +2,46 @@
 from ansible.module_utils.basic import *
 
 from mist.client import MistClient
+
+
+def init_client(mist_uri="https://mist.io", email=None, password=None):
+    client = MistClient(mist_uri, email, password)
+    return client
+
+
+def list_images(client, backend, search_term):
+    back = client.backends[backend]
+
+    return_images = []
+    images = back.images
+
+    if not search_term:
+        return images
+    else:
+        return [image for image in images if search_term.lower() in image['name'].lower()]
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            mist_uri=dict(default='https://mist.io', type='str'),
+            mist_email=dict(required=False, type='str'),
+            mist_password=dict(required=False, type='str'),
+            backend=dict(required=True, type='str'),
+            search_term=dict(required=False, type='str')
+        )
+    )
+
+    mist_uri = module.params.get('mist_uri')
+    mist_email = module.params.get('mist_email')
+    mist_password = module.params.get('mist_password')
+    backend = module.params.get('backend')
+    search_term = module.params.get('search_term')
+
+    client = init_client(mist_uri, mist_email, mist_password)
+    images = list_images(client, backend, search_term)
+
+    module.exit_json(changed=False, images=images)
+
+
+main()
