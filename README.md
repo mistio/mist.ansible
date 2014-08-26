@@ -45,3 +45,55 @@ Simple Example of Provisioning
 
 Full Example Playbook
 =====================
+```
+---
+- name: Provisioning playbook for nephoscale
+  hosts: localhost
+  tasks:
+  - name: Ensure NephoScale backend is present
+    mist_backends:
+      mist_email: yourmist@account.com
+      mist_password: yourmistpassword
+      provider: nephoscale
+      state: present
+      backend_key: nepho_username
+      backend_secret: nepho_password
+      name: Nepho
+  - name: Generate Key and save locally
+    mist_keys:
+      mist_email: yourmist@account.com
+      mist_password: yourmistpassword
+      name: NephoKey
+      auto_generate: true
+      save_locally: true
+      local_save_path: /home/user/.ssh/NephoKey
+  - name: Search for Ubuntu images
+    mist_images:
+      mist_email: yourmist@account.com
+      mist_password: yourmistpassword
+      backend: Nepho
+      search_term: Ubuntu
+    register: images
+  - name: List available sizes
+    mist_sizes:
+      mist_email: yourmist@account.com
+      mist_password: yourmistpassword
+      backend: Nepho
+    register: sizes
+  - name: List available locations
+    mist_locations:
+      mist_email: yourmist@account.com
+      mist_password: yourmistpassword
+      backend: Nepho
+    register: locations
+  - name: Create Machine
+    mist:
+      mist_email: yourmist@account.com
+      mist_password: yourmistpassword
+      backend: Nepho
+      key: NephoKey
+      location_id: "{{ locations['locations'][0]['id'] }}"
+      size_id: "{{ sizes['sizes'][0]['id'] }}"
+      image_id: "{{ images['images'][0]['id'] }}"
+      name: nephomachine
+```
