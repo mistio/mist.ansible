@@ -6,7 +6,7 @@ Ansible module for mist.io service
 Installation
 ============
 ```
-pip install mist.ansible```
+pip install mist.ansible
 
 ```
 
