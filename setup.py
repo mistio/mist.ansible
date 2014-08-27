@@ -3,7 +3,7 @@ import os
 import glob
 import shutil
 from setuptools import setup
-from distutils.command.install import install as _install
+from setuptools.command.install import install as _install
 
 here = os.path.abspath(os.path.dirname(__file__))
 
