@@ -5,15 +5,11 @@ Ansible module for mist.io service
 
 Installation
 ============
-Requires `mist.client` package
-
-```pip install mist.client```
+```
+pip install mist.ansible
 
 ```
-cd path/to/toplevel/directory/where/your/playbooks/are
-mkdir library
-git clone https://github.com/mistio/mist.ansible
-```
+
 
 Simple Example of Provisioning
 ==============================
