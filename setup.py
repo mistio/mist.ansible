@@ -58,6 +58,12 @@ def readme():
     with open('README.md') as f:
         return f.read()
 
+
+requires = [
+    'ansible',
+]
+
+
 setup(
     name='mist.ansible',
     version='0.0.1',
@@ -75,6 +81,7 @@ setup(
     author='Chris Loukas',
     author_email='commixon@gmail.com',
     license='AGPLv3',
+    install_requires=requires,
     cmdclass={'install': install},
     zip_safe=False
 )
