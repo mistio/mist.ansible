@@ -8,10 +8,25 @@ from distutils.command.install import install as _install
 here = os.path.abspath(os.path.dirname(__file__))
 
 
+def install_and_import(package):
+    import importlib
+    try:
+        importlib.import_module(package)
+        if package == "ansible":
+            print "<ansible> package already installed"
+    except ImportError:
+        import pip
+        print "Installing..."
+        pip.main(['install', package])
+    finally:
+        globals()[package] = importlib.import_module(package)
+
+
 def _post_install():
     """
     Install mist modules to the ansible modules directory
     """
+    install_and_import("ansible")
     try:
         from ansible.constants import DEFAULT_MODULE_PATH
     except ImportError:
@@ -41,7 +56,7 @@ class install(_install):
 
 
 requires = [
-    'ansible'
+    'ansible',
 ]
 
 
