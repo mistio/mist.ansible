@@ -22,11 +22,10 @@ def install_and_import(package):
         globals()[package] = importlib.import_module(package)
 
 
-def _post_install():
+def _post_install(msg):
     """
     Install mist modules to the ansible modules directory
     """
-    install_and_import("ansible")
     try:
         from ansible.constants import DEFAULT_MODULE_PATH
     except ImportError:
@@ -52,18 +51,12 @@ def _post_install():
 class install(_install):
     def run(self):
         _install.run(self)
-        _post_install()
-
-
-requires = [
-    'ansible',
-]
+        self.execute(_post_install, ("",), msg="")
 
 
 def readme():
     with open('README.md') as f:
         return f.read()
-
 
 setup(
     name='mist.ansible',
@@ -83,7 +76,6 @@ setup(
     author_email='commixon@gmail.com',
     license='AGPLv3',
     cmdclass={'install': install},
-    install_requires=requires,
     zip_safe=False
 )
 
