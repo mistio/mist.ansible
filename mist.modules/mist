@@ -39,7 +39,9 @@ def main():
             name=dict(required=True, type='str'),
             list_only=dict(required=False, default=False, type='bool'),
             wait=dict(required=False, default=False, type='bool'),
-            wait_time=dict(required=False, default=600, type='int')
+            wait_time=dict(required=False, default=600, type='int'),
+            monitoring=dict(required=False, type='bool', default=False),
+            wait_for_stats=dict(required=False, type='bool', default=False)
         )
     )
 
@@ -80,6 +82,8 @@ def main():
         module.exit_json(changed=True, machine=machine.info)
     else:
         wait_time = module.params.get('wait_time')
+        monitoring = module.params.get('monitoring')
+        wait_for_stats = module.params.get('wait_for_stats')
         start_time = time.time()
         while time.time() < start_time + wait_time:
             try:
@@ -94,6 +98,21 @@ def main():
             except:
                 backend.update_machines()
                 machine = backend.machines[machine_name]
+
+        if monitoring and wait_for_stats:
+            machine.enable_monitoring()
+            start_time = time.time()
+            while time.time() < start_time + wait_time:
+                try:
+                    time.sleep(15)
+                    stats = machine.get_stats()
+                    if stats:
+                        break
+                except:
+                    backend.update_machines()
+                    machine = backend.machines[machine_name]
+        elif monitoring:
+            machine.enable_monitoring()
 
         info = machine.info
         network_interfaces = info['extra'].get('network_interfaces', None)
