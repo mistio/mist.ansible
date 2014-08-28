@@ -66,7 +66,7 @@ requires = [
 
 setup(
     name='mist.ansible',
-    version='0.0.2',
+    version='0.0.3',
     description='Ansible modules for the mist.io service',
     long_description=readme(),
     classifiers=[
