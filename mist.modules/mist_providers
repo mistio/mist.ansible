@@ -45,7 +45,7 @@ options:
 requirements:
   - mist.client
 short_description: "Lists all available providers in the mist.io service"
-version_added: "1.7.1"
+version_added: "0.1.0"
 
 '''
 
