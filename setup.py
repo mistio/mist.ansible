@@ -60,7 +60,7 @@ def readme():
 
 
 requires = [
-    'ansible',
+    'mist.client>=0.1.0',
 ]
 
 
