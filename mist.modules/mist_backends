@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+import os
+import ConfigParser
+
 from ansible.module_utils.basic import *
 
 from mist.client import MistClient
@@ -142,6 +145,27 @@ EXAMPLES = '''
 '''
 
 
+def authenticate(uri, email, password):
+    home_path = os.getenv("HOME")
+    config_path = os.path.join(home_path, ".mist")
+
+    if os.path.isfile(config_path):
+        config = ConfigParser.ConfigParser()
+        config.readfp(open(config_path))
+    else:
+        return uri, email, password
+
+    if not uri:
+        uri = config.get("mist.io", "mist_uri") or None
+    if not email:
+        email = config.get("mist.credentials", "email") or None
+    if not password:
+        email = config.get("mist.credentials", "password") or None
+
+    client = init_client(mist_uri=uri, email=email, password=password)
+    return client
+
+
 def init_client(mist_uri="https://mist.io", email=None, password=None):
     client = MistClient(mist_uri, email, password)
     return client
@@ -219,7 +243,7 @@ def main():
     mist_email = module.params.get('mist_email')
     mist_password = module.params.get('mist_password')
 
-    client = init_client(mist_uri, mist_email, mist_password)
+    client = authenticate(uri=mist_uri, email=mist_email, password=mist_password)
 
     provider = module.params.get('provider')
     backend_state = check_state(provider, client)

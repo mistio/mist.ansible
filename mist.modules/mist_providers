@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+import os
+import ConfigParser
+
 from ansible.module_utils.basic import *
 
 from mist.client import MistClient
@@ -12,11 +15,11 @@ module: mist_providers
 options:
   mist_email:
     description:
-      - "Email to login to the mist.io service. Leave it blank in case you have a custom installation of mist.io that does not require login"
+      - "Email to login to the mist.io service"
     required: false
   mist_password:
     description:
-      - "Password to login to the mist.io service. Leave it blank in case you have a custom installation of mist.io that does not require login"
+      - "Password to login to the mist.io service"
     required: false
   mist_uri:
     default: "https://mist.io"
@@ -39,13 +42,12 @@ options:
       - all
     default: all
     description:
-      - "By default == \"all\", which returns all supported providers by the mist.io service."
+      - "By default c== \"all\", whih returns all supported providers by the mist.io service."
       - "You can explicitly set it to one of the choices to see only this provider-specific information"
     required: false
 requirements:
   - mist.client
 short_description: "Lists all available providers in the mist.io service"
-version_added: "0.1.0"
 
 '''
 
@@ -68,6 +70,27 @@ EXAMPLES = '''
     provider: ec2
   register: providers
 '''
+
+
+def authenticate(uri, email, password):
+    home_path = os.getenv("HOME")
+    config_path = os.path.join(home_path, ".mist")
+
+    if os.path.isfile(config_path):
+        config = ConfigParser.ConfigParser()
+        config.readfp(open(config_path))
+    else:
+        return uri, email, password
+
+    if not uri:
+        uri = config.get("mist.io", "mist_uri") or None
+    if not email:
+        email = config.get("mist.credentials", "email") or None
+    if not password:
+        email = config.get("mist.credentials", "password") or None
+
+    client = init_client(mist_uri=uri, email=email, password=password)
+    return client
 
 
 def init_client(mist_uri="https://mist.io", email=None, password=None):
@@ -106,7 +129,7 @@ def main():
     mist_password = module.params.get('mist_password')
     provider = module.params.get('provider')
 
-    client = init_client(mist_uri, mist_email, mist_password)
+    client = authenticate(mist_uri, mist_email, mist_password)
 
     module.exit_json(changed=True, supported_providers=supported_providers(client, provider))
 
