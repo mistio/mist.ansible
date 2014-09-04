@@ -72,25 +72,37 @@ EXAMPLES = '''
 '''
 
 
-def authenticate(uri, email, password):
+def authenticate(module):
     home_path = os.getenv("HOME")
     config_path = os.path.join(home_path, ".mist")
+    config = ConfigParser.ConfigParser()
 
+    mist_uri = module.params.get('mist_uri')
+    mist_email = module.params.get('mist_email')
+    mist_password = module.params.get('mist_password')
+
+
+    # Set default mist uri
+    config.add_section("mist.io")
+    config.set("mist.io", "mist_uri", "https://mist.io")
+
+    # Set default credentials
+    config.add_section("mist.credentials")
+    config.set("mist.credentials", "email", None)
+    config.set("mist.credentials", "password", None)
+
+    # Read configuration file
     if os.path.isfile(config_path):
-        config = ConfigParser.ConfigParser()
-        config.readfp(open(config_path))
-    else:
-        return uri, email, password
+            config.readfp(open(config_path))
 
-    if not uri:
-        uri = config.get("mist.io", "mist_uri") or None
-    if not email:
-        email = config.get("mist.credentials", "email") or None
-    if not password:
-        email = config.get("mist.credentials", "password") or None
+    mist_uri = config.get("mist.io", "mist_uri")
+    if not mist_email:
+        mist_email = config.get("mist.credentials", "email") or ""
 
-    client = init_client(mist_uri=uri, email=email, password=password)
-    return client
+    if not mist_password:
+        mist_password = config.get("mist.credentials", "password") or ""
+
+    return init_client(mist_uri, mist_email, mist_password)
 
 
 def init_client(mist_uri="https://mist.io", email=None, password=None):
@@ -124,12 +136,10 @@ def main():
         )
     )
 
-    mist_uri = module.params.get('mist_uri')
-    mist_email = module.params.get('mist_email')
-    mist_password = module.params.get('mist_password')
+
     provider = module.params.get('provider')
 
-    client = authenticate(mist_uri, mist_email, mist_password)
+    client = authenticate(module)
 
     module.exit_json(changed=True, supported_providers=supported_providers(client, provider))
 

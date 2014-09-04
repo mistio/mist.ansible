@@ -152,8 +152,6 @@ def authenticate(uri, email, password):
     if os.path.isfile(config_path):
         config = ConfigParser.ConfigParser()
         config.readfp(open(config_path))
-    else:
-        return uri, email, password
 
     if not uri:
         uri = config.get("mist.io", "mist_uri") or None
@@ -169,6 +167,35 @@ def authenticate(uri, email, password):
 def init_client(mist_uri="https://mist.io", email=None, password=None):
     client = MistClient(mist_uri, email, password)
     return client
+
+
+def determine_action(state):
+    if not state:
+        return "list"
+    else:
+        return "addremove"
+
+
+def list_backends(module, client):
+    backends = client.backends
+    backend = module.params.get("backend")
+
+    if not backend:
+        result = {}
+        for backend_key in backends.keys():
+            result[backend_key] = backends[backend_key].info
+    else:
+        found = client.backend_from_id(backend)
+        if not found:
+            found = client.backend_from_title(backend)
+
+        if not found:
+            result = {}
+        else:
+            result = {}
+            result[found.id] = found.info
+
+    module.exit_json(changed=False, info=result)
 
 
 def check_state(provider, client):
@@ -219,10 +246,11 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
-            provider=dict(required=True, type='str'),
-            state=dict(required=False, default='present', choices=['present', 'absent']),
+            provider=dict(required=False, type='str'),
+            state=dict(required=False, choices=['present', 'absent']),
             # enabled=dict(required=False, default=True, type='bool'),
             name=dict(required=False, type='str'),
+            backend=dict(required=False, type='str'),
             backend_key=dict(required=False, type='str'),
             backend_secret=dict(required=False, type='str'),
             tenant_name=dict(required=False, type='str'),
@@ -239,30 +267,37 @@ def main():
         )
     )
 
+    #Authenticate to mist.io and init MistClient
     mist_uri = module.params.get('mist_uri')
     mist_email = module.params.get('mist_email')
     mist_password = module.params.get('mist_password')
 
     client = authenticate(uri=mist_uri, email=mist_email, password=mist_password)
 
-    provider = module.params.get('provider')
-    backend_state = check_state(provider, client)
+    #Determine which action to run (e.g. list backends, add backend etc)
     state = module.params.get('state')
-    title = module.params.get('name')
+    action = determine_action(state)
 
-    if backend_state == "present" and state == "present":
-        CHANGED = False
-        module.exit_json(changed=CHANGED, backend=client.backends[title].info)
-    elif backend_state == "present" and state == "absent":
-        remove_backend(provider, client)
-        CHANGED = True
-        module.exit_json(changed=CHANGED)
-    elif backend_state == "absent" and state == "absent":
-        CHANGED = False
-        module.exit_json(changed=CHANGED)
-    elif backend_state == "absent" and state == "present":
-        CHANGED = True
-        backend_info = add_backend(client, module)
-        module.exit_json(changed=CHANGED, backend=backend_info)
+    if action == "list":
+        list_backends(module, client)
+    # provider = module.params.get('provider')
+    # backend_state = check_state(provider, client)
+    # state = module.params.get('state')
+    # title = module.params.get('name')
+    #
+    # if backend_state == "present" and state == "present":
+    #     CHANGED = False
+    #     module.exit_json(changed=CHANGED, backend=client.backends[title].info)
+    # elif backend_state == "present" and state == "absent":
+    #     remove_backend(provider, client)
+    #     CHANGED = True
+    #     module.exit_json(changed=CHANGED)
+    # elif backend_state == "absent" and state == "absent":
+    #     CHANGED = False
+    #     module.exit_json(changed=CHANGED)
+    # elif backend_state == "absent" and state == "present":
+    #     CHANGED = True
+    #     backend_info = add_backend(client, module)
+    #     module.exit_json(changed=CHANGED, backend=backend_info)
 
 main()
