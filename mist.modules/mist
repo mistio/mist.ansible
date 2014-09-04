@@ -1,8 +1,44 @@
 #!/usr/bin/env python
+import os
 import time
+import ConfigParser
+
 from ansible.module_utils.basic import *
 
 from mist.client import MistClient
+
+
+def authenticate(module):
+    home_path = os.getenv("HOME")
+    config_path = os.path.join(home_path, ".mist")
+    config = ConfigParser.ConfigParser()
+
+    mist_uri = module.params.get('mist_uri')
+    mist_email = module.params.get('mist_email')
+    mist_password = module.params.get('mist_password')
+
+
+    # Set default mist uri
+    config.add_section("mist.io")
+    config.set("mist.io", "mist_uri", "https://mist.io")
+
+    # Set default credentials
+    config.add_section("mist.credentials")
+    config.set("mist.credentials", "email", None)
+    config.set("mist.credentials", "password", None)
+
+    # Read configuration file
+    if os.path.isfile(config_path):
+            config.readfp(open(config_path))
+
+    mist_uri = config.get("mist.io", "mist_uri")
+    if not mist_email:
+        mist_email = config.get("mist.credentials", "email") or ""
+
+    if not mist_password:
+        mist_password = config.get("mist.credentials", "password") or ""
+
+    return init_client(mist_uri, mist_email, mist_password)
 
 
 def init_client(mist_uri="https://mist.io", email=None, password=None):
@@ -10,17 +46,159 @@ def init_client(mist_uri="https://mist.io", email=None, password=None):
     return client
 
 
-def supported_providers(client, provider):
-    providers = client.supported_providers
-
-    if provider == "all":
-        return providers
+def determine_action(state):
+    if not state:
+        return "list"
     else:
-        chosen_providers = []
-        for prov in providers:
-            if provider in prov['provider']:
-                chosen_providers.append(prov)
-        return chosen_providers
+        return "addremove"
+
+
+def choose_backend(module, client):
+    backend_name = module.params.get('backend')
+    backend = client.search_backend(backend_name)
+
+    if not backend:
+        module.fail_json(msg="You have to provide a valid backend id or name")
+
+    return backend
+
+
+def list_machines(module, client):
+    backend = choose_backend(module, client)
+    machine_name = module.params.get('name')
+
+    if not machine_name:
+        result = {}
+        for key in backend.machines.keys():
+            machine = backend.machines[key]
+            result[key] = machine.info
+    else:
+        result = {}
+        machine = backend.search_machine(machine_name)
+        if machine:
+            result = machine.info
+
+    if result:
+        info = result
+        network_interfaces = info['extra'].get('network_interfaces', None)
+        if network_interfaces:
+            info['extra'].pop('network_interfaces')
+    else:
+        info = result
+
+
+    module.exit_json(changed=False, info=info)
+
+
+def machine_action(module, client):
+    backend = choose_backend(module, client)
+    machine_name = module.params.get('name')
+    if not machine_name:
+        module.fail_json(msg="You have to provide a name for the machine")
+
+    machine_state, machine = check_state(backend, machine_name)
+
+    desired_state = module.params.get('state')
+
+    if machine_state == "present" and desired_state == "present":
+        change = False
+        monitoring = module.params.get('monitoring')
+        if monitoring:
+            machine.enable_monitoring()
+            change = True
+
+        info = machine.info
+        network_interfaces = info['extra'].get('network_interfaces', None)
+        if network_interfaces:
+            info['extra'].pop('network_interfaces')
+        module.exit_json(changed=change, info=info)
+    elif machine_state == "present" and desired_state == "absent":
+        machine.destroy()
+        module.exit_json(changed=True)
+    elif machine_state == "absent" and desired_state == "absent":
+        module.exit_json(changed=False)
+    elif machine_state == "absent" and desired_state == "present":
+        machine = create_machine(module, client, backend)
+
+        info = machine.info
+        network_interfaces = info['extra'].get('network_interfaces', None)
+        if network_interfaces:
+            info['extra'].pop('network_interfaces')
+
+        module.exit_json(changed=True, info=info)
+
+
+def check_state(backend, machine_name):
+    state = "absent"
+    machine = backend.search_machine(machine_name)
+    if machine:
+        state = "present"
+
+    return state, machine
+
+
+def create_machine(module, client, backend):
+    key_name = module.params.get('key')
+    key = client.keys[key_name]
+
+    machine_name = module.params.get('name')
+    image_id = module.params.get('image_id')
+    size_id = module.params.get('size_id')
+    location_id = module.params.get('location_id')
+    image_extra = module.params.get('image_extra')
+    disk = module.params.get('disk')
+
+    backend.create_machine(machine_name, key, image_id, location_id, size_id, image_extra, disk)
+    backend.update_machines()
+
+    wait = module.params.get('wait')
+    wait_time = module.params.get('wait_time')
+    monitoring = module.params.get('monitoring')
+    wait_for_stats = module.params.get('wait_for_stats')
+
+    if backend.provider == "nephoscale":
+        start_time = time.time()
+        while time.time() < start_time + wait_time:
+            time.sleep(15)
+            machine = backend.search_machine(machine_name)
+            if machine:
+                break
+            else:
+                backend.update_machines()
+    else:
+        machine = backend.search_machine(machine_name)
+
+    if wait or monitoring:
+        start_time = time.time()
+        while time.time() < start_time + wait_time:
+            try:
+                time.sleep(15)
+                probe_info = machine.probe()
+                uptime = probe_info.get('uptime', None)
+                if uptime:
+                    backend.update_machines()
+                    machine = backend.search_machine(machine_name)
+                    break
+            except:
+                backend.update_machines()
+                machine = backend.search_machine(machine_name)
+
+    if monitoring:
+        machine.enable_monitoring()
+
+    if monitoring and wait_for_stats:
+        start_time = time.time()
+        while time.time() < start_time + wait_time:
+            try:
+                time.sleep(15)
+                stats = machine.get_stats()
+                if stats:
+                    break
+            except:
+                backend.update_machines()
+                machine = backend.search_machine(machine_name)
+
+    return machine
 
 
 def main():
@@ -30,13 +208,14 @@ def main():
             mist_email=dict(required=False, type='str'),
             mist_password=dict(required=False, type='str'),
             backend=dict(required=True, type='str'),
+            state=dict(required=False, type='str', choices=['present', 'absent']),
             image_id=dict(required=False, type='str'),
             size_id=dict(required=False, type='str'),
             location_id=dict(required=False, type='str'),
             key=dict(required=False, type='str'),
             image_extra=dict(required=False, type='str'),
             disk=dict(required=False, type='str'),
-            name=dict(required=True, type='str'),
+            name=dict(required=False, type='str'),
             list_only=dict(required=False, default=False, type='bool'),
             wait=dict(required=False, default=False, type='bool'),
             wait_time=dict(required=False, default=600, type='int'),
@@ -45,81 +224,17 @@ def main():
         )
     )
 
-    mist_uri = module.params.get('mist_uri')
-    mist_email = module.params.get('mist_email')
-    mist_password = module.params.get('mist_password')
+    client = authenticate(module)
 
-    client = init_client(mist_uri, mist_email, mist_password)
+    #Determine which action to run (e.g. list machines, create machine etc)
+    state = module.params.get('state')
+    action = determine_action(state)
 
-    backend_name = module.params.get('backend')
-    backend = client.backends[backend_name]
-
-    list_only = module.params.get('list_only')
-
-    if list_only:
-        machine_name = module.params.get('name')
-        machine = backend.machines[machine_name]
-        module.exit_json(changed=False, machine=machine.info)
-
-    key_name = module.params.get('key')
-    key = client.keys[key_name]
-
-    image_id = module.params.get('image_id')
-    size_id = module.params.get('size_id')
-    location_id = module.params.get('location_id')
-    image_extra = module.params.get('image_extra')
-    disk = module.params.get('disk')
-
-    machine_name = module.params.get('name')
-
-    backend.create_machine(machine_name, key, image_id, location_id, size_id, image_extra, disk)
-    backend.update_machines()
-
-    machine = backend.machines[machine_name]
-
-    wait = module.params.get('wait')
-    if not wait:
-        module.exit_json(changed=True, machine=machine.info)
+    if action == "list":
+        list_machines(module, client)
     else:
-        wait_time = module.params.get('wait_time')
-        monitoring = module.params.get('monitoring')
-        wait_for_stats = module.params.get('wait_for_stats')
-        start_time = time.time()
-        while time.time() < start_time + wait_time:
-            try:
-                time.sleep(15)
-                probe_info = machine.probe()
-                uptime = probe_info.get('uptime', None)
-                if uptime:
-                    backend.update_machines()
-                    machine = backend.machines[machine_name]
+        machine_action(module, client)
 
-                    break
-            except:
-                backend.update_machines()
-                machine = backend.machines[machine_name]
-
-        if monitoring and wait_for_stats:
-            machine.enable_monitoring()
-            start_time = time.time()
-            while time.time() < start_time + wait_time:
-                try:
-                    time.sleep(15)
-                    stats = machine.get_stats()
-                    if stats:
-                        break
-                except:
-                    backend.update_machines()
-                    machine = backend.machines[machine_name]
-        elif monitoring:
-            machine.enable_monitoring()
-
-        info = machine.info
-        network_interfaces = info['extra'].get('network_interfaces', None)
-        if network_interfaces:
-            info['extra'].pop('network_interfaces')
-
-        module.exit_json(changed=True, machine=info)
 
 
 main()
