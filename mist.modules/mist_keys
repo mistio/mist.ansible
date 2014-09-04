@@ -53,6 +53,7 @@ def determine_action(state):
 
 
 def list_keys(module, client):
+    changed = False
     key_name = module.params.get('name')
     if not key_name:
         result = {}
@@ -63,22 +64,51 @@ def list_keys(module, client):
         result = {}
         key = client.keys[key_name]
         result = key.info
-        module.exit_json(changed=False, info=result, private=key.private, public=key.public)
+
+        #Determine if we want to save the key locally
+        save_locally = module.params.get('save_locally')
+        local_save_path = module.params.get('local_save_path')
+
+        private_path = os.path.join(local_save_path, key.id)
+        public_path = os.path.join(local_save_path, key.id + ".pub")
+        if save_locally and not os.path.isfile(private_path):
+            private = key.private
+            public = key.public
+            with open(private_path, "w") as f:
+                f.write(private)
+            with open(public_path, "w") as f:
+                f.write(public)
+            changed = True
+        module.exit_json(changed=changed, info=result, private=key.private, public=key.public)
 
 
-def check_state(private, client):
+def key_action(module, client):
+    key_name = module.params.get('name')
+    key_state, key = check_state(client, key_name)
+
+    desired_state = module.params.get('state')
+
+    if key_state == "present" and desired_state == "present":
+        module.exit_json(changed=False, info=key.info, private=key.private, public=key.public)
+    elif key_state == "present" and desired_state == "absent":
+        key.delete()
+        module.exit_json(changed=True)
+    elif key_state == "absent" and desired_state == "absent":
+        module.exit_json(changed=False)
+    elif key_state == 'absent' and desired_state == "present":
+        key = add_key(module, client)
+        module.exit_json(changed=True, info=key.info, private=key.private, public=key.public)
+
+
+def check_state(client, key_name):
     key_state = 'absent'
-    key_name = None
-    if not client.keys:
-        return key_state, name
-
-    for key in client.keys:
-        if private.strip("\n") == client.keys[key].private:
-            key_state = 'present'
-            key_name = key
-            break
-
-    return key_state, key_name
+    key = None
+    if key_name not in client.keys.keys():
+        return key_state, key
+    else:
+        key_state = 'present'
+        key = client.keys[key_name]
+        return key_state, key
 
 
 def remove_key(key_name, client):
@@ -87,13 +117,33 @@ def remove_key(key_name, client):
     return
 
 
-def add_key(key_name, private, client):
-    keys = client.keys
-    client.add_key(key_name, private.strip("\n"))
+def add_key(module, client):
+    local_key_path = module.params.get('key')
+    auto_generate = module.params.get('auto_generate')
+    save_locally = module.params.get('save_locally')
+    local_save_path = module.params.get('local_save_path')
+    key_name = module.params.get('name')
+
+    private_path = os.path.join(local_save_path, key_name)
+    public_path = os.path.join(local_save_path, key_name + ".pub")
+
+    if auto_generate:
+        private = client.generate_key()
+    else:
+        with open(local_key_path, "r") as f:
+            private = f.read().strip("\n")
+
+    client.add_key(key_name=key_name, private=private)
     client.update_keys()
     key = client.keys[key_name]
 
-    return key.info
+    if save_locally and not os.path.isfile(private_path):
+        with open(private_path, "w") as f:
+            f.write(key.private)
+        with open(public_path, "w") as f:
+            f.write(key.public)
+
+    return key
 
 
 def main():
@@ -122,52 +172,8 @@ def main():
 
     if action == "list":
         list_keys(module, client)
-    # state = module.params.get('state')
-    # auto_generate = module.params.get('auto_generate')
-    # client = init_client(mist_uri, mist_email, mist_password)
-    #
-    # #If not state and auto_generate then just list added keys
-    # if not state and not auto_generate:
-    #     if client.keys:
-    #         keys = {}
-    #         for key in client.keys:
-    #             keys[key] = client.keys[key].info
-    #     else:
-    #         keys = {}
-    #     module.exit_json(changed=False, keys=keys)
-    #
-    # if state:
-    #     key = module.params.get('key')
-    #     with open(key) as f:
-    #         private = f.read()
-    #
-    #     key_state, key_name = check_state(unicode(private), client)
-    #
-    #     if key_state == "present" and state == "present":
-    #         module.exit_json(changed=False, key=client.keys[key_name].info)
-    #     elif key_state == "present" and state == "absent":
-    #         remove_key(key_name, client)
-    #         module.exit_json(changed=True)
-    #     elif key_state == "absent" and state == "present":
-    #         name = module.params.get('name')
-    #         key_info = add_key(name, private=private, client=client)
-    #         module.exit_json(changed=True, key=key_info)
-    #     elif key_state == "absent" and state == "absent":
-    #         module.exit_json(changed=False)
-    #
-    # if auto_generate:
-    #     private = client.generate_key()
-    #     name = module.params.get('name')
-    #     save_locally = module.params.get('save_locally')
-    #     local_save_path = module.params.get('local_save_path')
-    #
-    #     key_info = add_key(name, private, client)
-    #
-    #     if not save_locally:
-    #         module.exit_json(changed=True, key=key_info)
-    #     else:
-    #         with open(local_save_path, 'w') as f:
-    #             f.write(private)
-    #         module.exit_json(changed=True, key=key_info, path=local_save_path)
+    else:
+        key_action(module, client)
+
 
 main()
