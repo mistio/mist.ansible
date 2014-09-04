@@ -145,23 +145,37 @@ EXAMPLES = '''
 '''
 
 
-def authenticate(uri, email, password):
+def authenticate(module):
     home_path = os.getenv("HOME")
     config_path = os.path.join(home_path, ".mist")
+    config = ConfigParser.ConfigParser()
 
+    mist_uri = module.params.get('mist_uri')
+    mist_email = module.params.get('mist_email')
+    mist_password = module.params.get('mist_password')
+
+
+    # Set default mist uri
+    config.add_section("mist.io")
+    config.set("mist.io", "mist_uri", "https://mist.io")
+
+    # Set default credentials
+    config.add_section("mist.credentials")
+    config.set("mist.credentials", "email", None)
+    config.set("mist.credentials", "password", None)
+
+    # Read configuration file
     if os.path.isfile(config_path):
-        config = ConfigParser.ConfigParser()
-        config.readfp(open(config_path))
+            config.readfp(open(config_path))
 
-    if not uri:
-        uri = config.get("mist.io", "mist_uri") or None
-    if not email:
-        email = config.get("mist.credentials", "email") or None
-    if not password:
-        email = config.get("mist.credentials", "password") or None
+    mist_uri = config.get("mist.io", "mist_uri")
+    if not mist_email:
+        mist_email = config.get("mist.credentials", "email") or ""
 
-    client = init_client(mist_uri=uri, email=email, password=password)
-    return client
+    if not mist_password:
+        mist_password = config.get("mist.credentials", "password") or ""
+
+    return init_client(mist_uri, mist_email, mist_password)
 
 
 def init_client(mist_uri="https://mist.io", email=None, password=None):
@@ -178,7 +192,7 @@ def determine_action(state):
 
 def list_backends(module, client):
     backends = client.backends
-    backend = module.params.get("backend")
+    backend = module.params.get('backend')
 
     if not backend:
         result = {}
@@ -198,16 +212,38 @@ def list_backends(module, client):
     module.exit_json(changed=False, info=result)
 
 
-def check_state(provider, client):
+def backend_action(module, client):
+    provider = module.params.get('provider')
+    backend_name = module.params.get('name')
+    desired_state = module.params.get('state')
+
+    backend_state, chosen_backend = check_state(client, provider, backend_name)
+
+    if backend_state == 'present' and desired_state == 'present':
+        module.exit_json(changed=False, info=chosen_backend.info)
+    elif backend_state == 'present' and desired_state == 'absent':
+        chosen_backend.delete()
+        module.exit_json(changed=True)
+    elif backend_state == 'absent' and desired_state == 'absent':
+        module.exit_json(changed=False)
+    elif backend_state == 'absent' and desired_state == 'present':
+        chosen_backend = add_backend(module, client)
+        module.exit_json(changed=True, info=chosen_backend.info)
+    module.exit_json(changed=False, info="paparia")
+
+
+def check_state(client, provider, backend_name):
     backend_state = 'absent'
+    chosen_backend = None
 
     for key in client.backends:
         backend = client.backends[key]
-        if backend.info['provider'] == provider:
+        if backend.info['provider'] == provider and backend.title == backend_name:
             backend_state = 'present'
+            chosen_backend = backend
             break
 
-    return backend_state
+    return backend_state, chosen_backend
 
 
 def remove_backend(provider, client):
@@ -218,7 +254,7 @@ def remove_backend(provider, client):
             return
 
 
-def add_backend(client, module):
+def add_backend(module, client):
     title = module.params.get('name')
     provider = module.params.get('provider')
     key = module.params.get('backend_key')
@@ -237,13 +273,11 @@ def add_backend(client, module):
 
     client.update_backends()
 
-    backend = client.backends[title]
-    return backend.info
+    backend = client.backend_from_title(title)
+    return backend
 
 
 def main():
-    CHANGED = False
-
     module = AnsibleModule(
         argument_spec=dict(
             provider=dict(required=False, type='str'),
@@ -267,12 +301,7 @@ def main():
         )
     )
 
-    #Authenticate to mist.io and init MistClient
-    mist_uri = module.params.get('mist_uri')
-    mist_email = module.params.get('mist_email')
-    mist_password = module.params.get('mist_password')
-
-    client = authenticate(uri=mist_uri, email=mist_email, password=mist_password)
+    client = authenticate(module)
 
     #Determine which action to run (e.g. list backends, add backend etc)
     state = module.params.get('state')
@@ -280,24 +309,7 @@ def main():
 
     if action == "list":
         list_backends(module, client)
-    # provider = module.params.get('provider')
-    # backend_state = check_state(provider, client)
-    # state = module.params.get('state')
-    # title = module.params.get('name')
-    #
-    # if backend_state == "present" and state == "present":
-    #     CHANGED = False
-    #     module.exit_json(changed=CHANGED, backend=client.backends[title].info)
-    # elif backend_state == "present" and state == "absent":
-    #     remove_backend(provider, client)
-    #     CHANGED = True
-    #     module.exit_json(changed=CHANGED)
-    # elif backend_state == "absent" and state == "absent":
-    #     CHANGED = False
-    #     module.exit_json(changed=CHANGED)
-    # elif backend_state == "absent" and state == "present":
-    #     CHANGED = True
-    #     backend_info = add_backend(client, module)
-    #     module.exit_json(changed=CHANGED, backend=backend_info)
+    else:
+        backend_action(module, client)
 
 main()

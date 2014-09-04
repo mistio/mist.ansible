@@ -110,7 +110,9 @@ def init_client(mist_uri="https://mist.io", email=None, password=None):
     return client
 
 
-def supported_providers(client, provider):
+def supported_providers(module, client):
+    provider = module.params.get('provider')
+
     providers = client.supported_providers
 
     if provider == "all":
@@ -137,11 +139,11 @@ def main():
     )
 
 
-    provider = module.params.get('provider')
-
     client = authenticate(module)
 
-    module.exit_json(changed=True, supported_providers=supported_providers(client, provider))
+    result = supported_providers(module, client)
+
+    module.exit_json(changed=True, supported_providers=result)
 
 
 main()
