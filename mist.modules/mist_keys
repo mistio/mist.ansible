@@ -1,12 +1,69 @@
 #!/usr/bin/env python
+import os
+import ConfigParser
+
 from ansible.module_utils.basic import *
 
 from mist.client import MistClient
 
 
+def authenticate(module):
+    home_path = os.getenv("HOME")
+    config_path = os.path.join(home_path, ".mist")
+    config = ConfigParser.ConfigParser()
+
+    mist_uri = module.params.get('mist_uri')
+    mist_email = module.params.get('mist_email')
+    mist_password = module.params.get('mist_password')
+
+
+    # Set default mist uri
+    config.add_section("mist.io")
+    config.set("mist.io", "mist_uri", "https://mist.io")
+
+    # Set default credentials
+    config.add_section("mist.credentials")
+    config.set("mist.credentials", "email", None)
+    config.set("mist.credentials", "password", None)
+
+    # Read configuration file
+    if os.path.isfile(config_path):
+            config.readfp(open(config_path))
+
+    mist_uri = config.get("mist.io", "mist_uri")
+    if not mist_email:
+        mist_email = config.get("mist.credentials", "email") or ""
+
+    if not mist_password:
+        mist_password = config.get("mist.credentials", "password") or ""
+
+    return init_client(mist_uri, mist_email, mist_password)
+
+
 def init_client(mist_uri="https://mist.io", email=None, password=None):
     client = MistClient(mist_uri, email, password)
     return client
+
+
+def determine_action(state):
+    if not state:
+        return "list"
+    else:
+        return "addremove"
+
+
+def list_keys(module, client):
+    key_name = module.params.get('name')
+    if not key_name:
+        result = {}
+        for key in client.keys:
+            result[key] = client.keys[key].info
+        module.exit_json(changed=False, info=result)
+    else:
+        result = {}
+        key = client.keys[key_name]
+        result = key.info
+        module.exit_json(changed=False, info=result, private=key.private, public=key.public)
 
 
 def check_state(private, client):
@@ -57,56 +114,60 @@ def main():
         )
     )
 
-    mist_uri = module.params.get('mist_uri')
-    mist_email = module.params.get('mist_email')
-    mist_password = module.params.get('mist_password')
+    client = authenticate(module)
 
+    #Determine which action to run (e.g. list keys, add key etc)
     state = module.params.get('state')
-    auto_generate = module.params.get('auto_generate')
-    client = init_client(mist_uri, mist_email, mist_password)
+    action = determine_action(state)
 
-    #If not state and auto_generate then just list added keys
-    if not state and not auto_generate:
-        if client.keys:
-            keys = {}
-            for key in client.keys:
-                keys[key] = client.keys[key].info
-        else:
-            keys = {}
-        module.exit_json(changed=False, keys=keys)
-
-    if state:
-        key = module.params.get('key')
-        with open(key) as f:
-            private = f.read()
-
-        key_state, key_name = check_state(unicode(private), client)
-
-        if key_state == "present" and state == "present":
-            module.exit_json(changed=False, key=client.keys[key_name].info)
-        elif key_state == "present" and state == "absent":
-            remove_key(key_name, client)
-            module.exit_json(changed=True)
-        elif key_state == "absent" and state == "present":
-            name = module.params.get('name')
-            key_info = add_key(name, private=private, client=client)
-            module.exit_json(changed=True, key=key_info)
-        elif key_state == "absent" and state == "absent":
-            module.exit_json(changed=False)
-
-    if auto_generate:
-        private = client.generate_key()
-        name = module.params.get('name')
-        save_locally = module.params.get('save_locally')
-        local_save_path = module.params.get('local_save_path')
-
-        key_info = add_key(name, private, client)
-
-        if not save_locally:
-            module.exit_json(changed=True, key=key_info)
-        else:
-            with open(local_save_path, 'w') as f:
-                f.write(private)
-            module.exit_json(changed=True, key=key_info, path=local_save_path)
+    if action == "list":
+        list_keys(module, client)
+    # state = module.params.get('state')
+    # auto_generate = module.params.get('auto_generate')
+    # client = init_client(mist_uri, mist_email, mist_password)
+    #
+    # #If not state and auto_generate then just list added keys
+    # if not state and not auto_generate:
+    #     if client.keys:
+    #         keys = {}
+    #         for key in client.keys:
+    #             keys[key] = client.keys[key].info
+    #     else:
+    #         keys = {}
+    #     module.exit_json(changed=False, keys=keys)
+    #
+    # if state:
+    #     key = module.params.get('key')
+    #     with open(key) as f:
+    #         private = f.read()
+    #
+    #     key_state, key_name = check_state(unicode(private), client)
+    #
+    #     if key_state == "present" and state == "present":
+    #         module.exit_json(changed=False, key=client.keys[key_name].info)
+    #     elif key_state == "present" and state == "absent":
+    #         remove_key(key_name, client)
+    #         module.exit_json(changed=True)
+    #     elif key_state == "absent" and state == "present":
+    #         name = module.params.get('name')
+    #         key_info = add_key(name, private=private, client=client)
+    #         module.exit_json(changed=True, key=key_info)
+    #     elif key_state == "absent" and state == "absent":
+    #         module.exit_json(changed=False)
+    #
+    # if auto_generate:
+    #     private = client.generate_key()
+    #     name = module.params.get('name')
+    #     save_locally = module.params.get('save_locally')
+    #     local_save_path = module.params.get('local_save_path')
+    #
+    #     key_info = add_key(name, private, client)
+    #
+    #     if not save_locally:
+    #         module.exit_json(changed=True, key=key_info)
+    #     else:
+    #         with open(local_save_path, 'w') as f:
+    #             f.write(private)
+    #         module.exit_json(changed=True, key=key_info, path=local_save_path)
 
 main()
