@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 import os
 
+import ConfigParser
+
+from ansible.module_utils.basic import *
+
+from mist.client import MistClient
+
+
+
 DESCRIPTION = '''
 module: mist_images
 short_description: Lists all available OS images for a backend
@@ -55,12 +63,6 @@ EXAMPLES = '''
     search: gentoo
   register: images
 '''
-
-import ConfigParser
-
-from ansible.module_utils.basic import *
-
-from mist.client import MistClient
 
 
 def authenticate(module):

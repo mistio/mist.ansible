@@ -1,6 +1,14 @@
 #!/usr/bin/env python
 import os
 
+import ConfigParser
+
+from ansible.module_utils.basic import *
+
+from mist.client import MistClient
+
+
+
 DOCUMENTATION = '''
 module: mist_locations
 short_description: Lists all available locations/regions for a backend
@@ -42,12 +50,6 @@ EXAMPLES = '''
   register: locations
 
 '''
-
-import ConfigParser
-
-from ansible.module_utils.basic import *
-
-from mist.client import MistClient
 
 
 def authenticate(module):
