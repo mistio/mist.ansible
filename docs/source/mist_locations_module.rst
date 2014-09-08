@@ -4,7 +4,7 @@
 mist_locations - Lists all available locations/regions for a backend
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-:Author: Chris Loukas <commixon@gmail.com>
+:Author: Mist.io Inc
 
 .. contents::
    :local:

@@ -4,7 +4,7 @@
 mist_sizes - Lists all available machine sizes for a backend
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-:Author: Chris Loukas <commixon@gmail.com>
+:Author: Mist.io Inc
 
 .. contents::
    :local:

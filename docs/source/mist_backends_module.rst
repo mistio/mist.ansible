@@ -4,7 +4,7 @@
 mist_backends - Manage backends in the mist.io service
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-:Author: Chris Loukas <commixon@gmail.com>
+:Author: Mist.io Inc
 
 .. contents::
    :local:

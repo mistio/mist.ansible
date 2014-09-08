@@ -4,7 +4,7 @@
 mist - Provision, monitor and manage machines with the mist.io service
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-:Author: Chris Loukas <commixon@gmail.com>
+:Author: Mist.io Inc
 
 .. contents::
    :local:

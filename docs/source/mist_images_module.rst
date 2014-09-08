@@ -4,7 +4,7 @@
 mist_images - Lists all available OS images for a backend
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-:Author: Chris Loukas <commixon@gmail.com>
+:Author: Mist.io Inc
 
 .. contents::
    :local:
