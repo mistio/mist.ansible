@@ -8,8 +8,7 @@ from ansible.module_utils.basic import *
 from mist.client import MistClient
 
 
-
-DESCRIPTION = '''
+DOCUMENTATION = '''
 module: mist_images
 short_description: Lists all available OS images for a backend
 description:
