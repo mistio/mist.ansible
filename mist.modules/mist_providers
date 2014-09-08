@@ -8,23 +8,27 @@ from mist.client import MistClient
 
 DOCUMENTATION = '''
 ---
-author: "Chris Loukas <commixon@gmail.com>"
-description:
-  - "Returns a list of all available providers that you can add and control through mist.io service"
 module: mist_providers
+short_description: Lists all available providers supported by the mist.io service
+description:
+  - Returns a list of all available providers that you can add and control through mist.io service
+  - I(mist_email) and I(mist_password) can be skipped if I(~/.mist) config file is present.
+  - See mist.client documentation for config file U(http://mistclient.readthedocs.org/en/latest/cmd/cmd.html)
+requirements:
+  - mist.client
 options:
   mist_email:
     description:
-      - "Email to login to the mist.io service"
+      - Email to login to the mist.io service
     required: false
   mist_password:
     description:
-      - "Password to login to the mist.io service"
+      - Password to login to the mist.io service
     required: false
   mist_uri:
-    default: "https://mist.io"
+    default: https://mist.io
     description:
-      - "Url of the mist.io service. By default https://mist.io. But if you have a custom installtion of mist.io you can provide the url here"
+      - Url of the mist.io service. By default https://mist.io. But if you have a custom installtion of mist.io you can provide the url here
     required: false
   provider:
     choices:
@@ -42,13 +46,11 @@ options:
       - all
     default: all
     description:
-      - "By default c== \"all\", whih returns all supported providers by the mist.io service."
-      - "You can explicitly set it to one of the choices to see only this provider-specific information"
+      - By default I(all), which returns all supported providers by the mist.io service.
+      - You can explicitly set it to one of the choices to see only this provider-specific information
     required: false
-requirements:
-  - mist.client
-short_description: "Lists all available providers in the mist.io service"
-
+author: "Chris Loukas <commixon@gmail.com>"
+version_added: "1.7.1"
 '''
 
 EXAMPLES = '''
@@ -56,11 +58,12 @@ EXAMPLES = '''
   mist_providers:
     mist_email: your@email.com
     mist_password: yourpassword
+    provider: all
   register: providers
 
-- name: List supported providers from custom_url
+- name: List supported provider having ~/.mist config file present
   mist_providers:
-    mist_uri: http://localhost:8000
+    provider: all
   register: providers
 
 - name: List only ec2 provider options
@@ -137,7 +140,6 @@ def main():
                                                                               'softlayer', 'all'])
         )
     )
-
 
     client = authenticate(module)
 
