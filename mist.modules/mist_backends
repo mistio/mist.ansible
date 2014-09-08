@@ -14,19 +14,18 @@ description:
   - Manage multi-cloud backends through mist.io service.
   - You can add/remove multiple backends from multiple providers through mist.io service.
   - Before you can provision, monitor etc machines through mist.io, you have to first add a backend to the mist.io service.
-  - Mist.io supports:
-  - EC2
-  - Rackspace
-  - Openstack
-  - Linode
-  - Google Compute Engine
-  - SoftLayer
-  - Digital Ocean
-  - Nephoscale
-  - Bare metal servers
-  - Docker containers
-  - HP Cloud
-  -
+  - Mist.io supports
+  - EC2,
+  - Rackspace,
+  - Openstack,
+  - Linode,
+  - Google Compute Engine,
+  - SoftLayer,
+  - Digital Ocean,
+  - Nephoscale,
+  - Bare metal servers,
+  - Docker containers,
+  - HP Cloud.
   - I(mist_email) and I(mist_password) can be skipped if I(~/.mist) config file is present.
   - See mist.client documentation for config file U(http://mistclient.readthedocs.org/en/latest/cmd/cmd.html)
 requirements:
@@ -43,11 +42,11 @@ options:
   mist_uri:
     default: https://mist.io
     description:
-      - Url of the mist.io service. By default https://mist.io. But if you have a custom installtion of mist.io you can provide the url here
+      - Url of the mist.io service. By default https://mist.io. But if you have a custom installation of mist.io you can provide the url here
     required: false
   state:
     description:
-      - If provided it will instruct the module to tirgger backend actions, otherwise it will only list information
+      - If provided it will instruct the module to trigger backend actions, otherwise it will only list information
     choices: ["present", "absent"]
     required: false
   name:
@@ -56,8 +55,7 @@ options:
     required: false
   provider:
     description:
-      - Provider id for the backend you want to add to mist.io.
-      - You can see all the providers ids using the M(mist_providers) module.
+      - Provider id for the backend you want to add to mist.io. You can see all the providers ids using the M(mist_providers) module.
     required: false
   region:
     description:
@@ -101,8 +99,7 @@ options:
     required: false
   backend:
     description:
-      - Can be either he backend's name or id.
-      - To be used when listing info for backends.
+      - Can be either he backend's name or id. To be used when listing info for backends.
 author: "Chris Loukas <commixon@gmail.com>"
 version_added: "1.7.1"
 

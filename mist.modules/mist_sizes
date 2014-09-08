@@ -27,7 +27,7 @@ options:
   mist_uri:
     default: https://mist.io
     description:
-      - Url of the mist.io service. By default https://mist.io. But if you have a custom installtion of mist.io you can provide the url here
+      - Url of the mist.io service. By default https://mist.io. But if you have a custom installation of mist.io you can provide the url here
     required: false
   backend:
     description:

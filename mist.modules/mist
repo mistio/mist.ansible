@@ -8,12 +8,12 @@ from ansible.module_utils.basic import *
 from mist.client import MistClient
 
 DOCUMENTATION = '''
-module: mist_backends
+---
+module: mist
 short_description: Provision, monitor and manage machines with the mist.io service
 description:
   - Manage machines in all of your added backends
   - You can add/remove multiple backends from multiple providers through mist.io service.
-  -
   - I(mist_email) and I(mist_password) can be skipped if I(~/.mist) config file is present.
   - See mist.client documentation for config file U(http://mistclient.readthedocs.org/en/latest/cmd/cmd.html)
 requirements:
@@ -30,11 +30,11 @@ options:
   mist_uri:
     default: https://mist.io
     description:
-      - Url of the mist.io service. By default https://mist.io. But if you have a custom installtion of mist.io you can provide the url here
+      - Url of the mist.io service. By default https://mist.io. But if you have a custom installation of mist.io you can provide the url here
     required: false
   state:
     description:
-      - If provided it will instruct the module to tirgger machine actions, otherwise it will only list information
+      - If provided it will instruct the module to trigger machine actions, otherwise it will only list information
     choices: ["present", "absent"]
     required: false
   name:
@@ -50,9 +50,11 @@ options:
       - Id of the OS image you want to use to provision your machine
     required: false
   size_id:
+    description:
       - Id of the machine size you want to use
     required: false
   location_id:
+    description:
       - Id of the location/region you want to provision your machine to
     required: false
   key:
@@ -95,7 +97,7 @@ version_added: "1.7.1"
 
 EXAMPLES = '''
 - name: Provision Ubuntu machine to EC2
-  mist_machines:
+  mist:
     mist_email: your@email.com
     mist_password: yourpassword
     backend: EC2
@@ -106,7 +108,7 @@ EXAMPLES = '''
     location_id: 0
 
 - name: Provision SUSE machine on EC2 and enable monitoring
-  mist_machines:
+  mist:
     mist_email: your@email.com
     mist_password: yourpassword
     backend: EC2
@@ -119,7 +121,7 @@ EXAMPLES = '''
     wait_for_stats: true
 
 - name: List info for machine with name dbServer
-  mist_machines:
+  mist:
     mist_email: your@email.com
     mist_password: yourpassword
     backend: EC2
