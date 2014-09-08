@@ -84,13 +84,14 @@ EXAMPLES = '''
     local_save_path: /path/to/save
 
 - name: Delete key named myKey
+  mist_keys:
     mist_email: your@email.com
     mist_password: yourpassword
     name: myKey
     state: absent
 
 - name: List info for key named myKey
-  mist_providers:
+  mist_keys:
     mist_email: your@email.com
     mist_password: yourpassword
     name: myKey
