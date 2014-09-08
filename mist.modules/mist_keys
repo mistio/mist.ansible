@@ -6,7 +6,7 @@ from ansible.module_utils.basic import *
 
 from mist.client import MistClient
 
-DESCRIPTION = '''
+DOCUMENTATION = '''
 module: mist_keys
 short_description: Manage ssh-keys from mist.io service
 description:
