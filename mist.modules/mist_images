@@ -44,6 +44,7 @@ EXAMPLES = '''
   mist_images:
     mist_email: your@email.com
     mist_password: yourpassword
+    backend: NephoScale
   register: images
 
 - name: Search for gentoo images in backend with id i984JHdkjhKj
@@ -54,6 +55,7 @@ EXAMPLES = '''
     search: gentoo
   register: images
 '''
+
 import ConfigParser
 
 from ansible.module_utils.basic import *

@@ -1,5 +1,48 @@
 #!/usr/bin/env python
 import os
+
+DOCUMENTATION = '''
+module: mist_locations
+short_description: Lists all available locations/regions for a backend
+description:
+  - Returns a list of all available locations/regions for a given backend
+  - I(mist_email) and I(mist_password) can be skipped if I(~/.mist) config file is present.
+  - See mist.client documentation for config file U(http://mistclient.readthedocs.org/en/latest/cmd/cmd.html)
+requirements:
+  - mist.client
+options:
+  mist_email:
+    description:
+      - Email to login to the mist.io service
+    required: false
+  mist_password:
+    description:
+      - Password to login to the mist.io service
+    required: false
+  mist_uri:
+    default: https://mist.io
+    description:
+      - Url of the mist.io service. By default https://mist.io. But if you have a custom installtion of mist.io you can provide the url here
+    required: false
+  backend:
+    description:
+      - Can be either backend's id or name
+    required: true
+author: "Chris Loukas <commixon@gmail.com>"
+version_added: "1.7.1"
+
+'''
+
+EXAMPLES = '''
+- name: List locations for a backend
+  mist_locations:
+    mist_email: your@email.com
+    mist_password: yourpassword
+    backend: DigitalOcean
+  register: locations
+
+'''
+
 import ConfigParser
 
 from ansible.module_utils.basic import *
