@@ -161,6 +161,7 @@ Examples
         backend: EC2
         state: present
         name: MyMachine
+        key: myKey
         image_id: ami-bddaa2bc
         size_id: m1.small
         location_id: 0
@@ -172,6 +173,7 @@ Examples
         backend: EC2
         state: present
         name: MyMachine
+        key: myKey
         image_id: ami-9178e890
         size_id: m1.small
         location_id: 0
