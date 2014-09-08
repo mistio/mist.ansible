@@ -6,17 +6,24 @@
 Welcome to mist.ansible's documentation!
 ========================================
 
+:Version: 0.1.0
+:Author: Mist.io Inc
+:Source: https://github.com/mistio/mist.ansible
+:License: GPL v3
+
 Contents:
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
+   introduction
 
+   mist_providers_module
+   mist_backends_module
+   mist_keys_module
+   mist_images_module
+   mist_locations_module
+   mist_sizes_module
+   mist_module
 
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
 

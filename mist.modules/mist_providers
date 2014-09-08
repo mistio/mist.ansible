@@ -1,27 +1,34 @@
 #!/usr/bin/env python
+import os
+import ConfigParser
+
 from ansible.module_utils.basic import *
 
 from mist.client import MistClient
 
 DOCUMENTATION = '''
 ---
-author: "Chris Loukas <commixon@gmail.com>"
-description:
-  - "Returns a list of all available providers that you can add and control through mist.io service"
 module: mist_providers
+short_description: Lists all available providers supported by the mist.io service
+description:
+  - Returns a list of all available providers that you can add and control through mist.io service
+  - I(mist_email) and I(mist_password) can be skipped if I(~/.mist) config file is present.
+  - See mist.client documentation for config file U(http://mistclient.readthedocs.org/en/latest/cmd/cmd.html)
+requirements:
+  - mist.client
 options:
   mist_email:
     description:
-      - "Email to login to the mist.io service. Leave it blank in case you have a custom installation of mist.io that does not require login"
+      - Email to login to the mist.io service
     required: false
   mist_password:
     description:
-      - "Password to login to the mist.io service. Leave it blank in case you have a custom installation of mist.io that does not require login"
+      - Password to login to the mist.io service
     required: false
   mist_uri:
-    default: "https://mist.io"
+    default: https://mist.io
     description:
-      - "Url of the mist.io service. By default https://mist.io. But if you have a custom installtion of mist.io you can provide the url here"
+      - Url of the mist.io service. By default https://mist.io. But if you have a custom installation of mist.io you can provide the url here
     required: false
   provider:
     choices:
@@ -39,14 +46,11 @@ options:
       - all
     default: all
     description:
-      - "By default == \"all\", which returns all supported providers by the mist.io service."
-      - "You can explicitly set it to one of the choices to see only this provider-specific information"
+      - By default I(all), which returns all supported providers by the mist.io service.
+      - You can explicitly set it to one of the choices to see only this provider-specific information
     required: false
-requirements:
-  - mist.client
-short_description: "Lists all available providers in the mist.io service"
+author: "Chris Loukas <commixon@gmail.com>"
 version_added: "1.7.1"
-
 '''
 
 EXAMPLES = '''
@@ -54,11 +58,12 @@ EXAMPLES = '''
   mist_providers:
     mist_email: your@email.com
     mist_password: yourpassword
+    provider: all
   register: providers
 
-- name: List supported providers from custom_url
+- name: List supported provider having ~/.mist config file present
   mist_providers:
-    mist_uri: http://localhost:8000
+    provider: all
   register: providers
 
 - name: List only ec2 provider options
@@ -70,12 +75,47 @@ EXAMPLES = '''
 '''
 
 
+def authenticate(module):
+    home_path = os.getenv("HOME")
+    config_path = os.path.join(home_path, ".mist")
+    config = ConfigParser.ConfigParser()
+
+    mist_uri = module.params.get('mist_uri')
+    mist_email = module.params.get('mist_email')
+    mist_password = module.params.get('mist_password')
+
+
+    # Set default mist uri
+    config.add_section("mist.io")
+    config.set("mist.io", "mist_uri", "https://mist.io")
+
+    # Set default credentials
+    config.add_section("mist.credentials")
+    config.set("mist.credentials", "email", None)
+    config.set("mist.credentials", "password", None)
+
+    # Read configuration file
+    if os.path.isfile(config_path):
+            config.readfp(open(config_path))
+
+    mist_uri = config.get("mist.io", "mist_uri")
+    if not mist_email:
+        mist_email = config.get("mist.credentials", "email") or ""
+
+    if not mist_password:
+        mist_password = config.get("mist.credentials", "password") or ""
+
+    return init_client(mist_uri, mist_email, mist_password)
+
+
 def init_client(mist_uri="https://mist.io", email=None, password=None):
     client = MistClient(mist_uri, email, password)
     return client
 
 
-def supported_providers(client, provider):
+def supported_providers(module, client):
+    provider = module.params.get('provider')
+
     providers = client.supported_providers
 
     if provider == "all":
@@ -101,14 +141,11 @@ def main():
         )
     )
 
-    mist_uri = module.params.get('mist_uri')
-    mist_email = module.params.get('mist_email')
-    mist_password = module.params.get('mist_password')
-    provider = module.params.get('provider')
+    client = authenticate(module)
 
-    client = init_client(mist_uri, mist_email, mist_password)
+    result = supported_providers(module, client)
 
-    module.exit_json(changed=True, supported_providers=supported_providers(client, provider))
+    module.exit_json(changed=True, supported_providers=result)
 
 
 main()
