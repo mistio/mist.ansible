@@ -90,6 +90,25 @@ options:
       - If I(True), it will wait for the monitoring stats to start
     default: False
     required: false
+  metric:
+    description:
+        - It will be either the metric id for the supported metrics, or the name in case I(python_file) is provided
+        - I(wait_for_stats) needs to be true
+    required: False
+  python_file:
+    description:
+        - This is the path of a python file in case you want to add a custom python metric
+    required: False
+  value_type:
+    description:
+        - What type of value has the plugin
+    choices: ["gauge", "derive"]
+    default: gauge
+    required: False
+  unit:
+    description:
+        - The unit of the metric you add. Can be left none
+    required: False
 author: "Chris Loukas <commixon@gmail.com>"
 version_added: "1.7.1"
 
@@ -130,6 +149,18 @@ EXAMPLES = '''
     name: dbServer
   register: machine
 
+- name: Enable monitoring and add custom plugin.py
+    mist_email: your@email.com
+    mist_password: yourpassword
+    backend: EC2
+    name: dbServer
+    state: present
+    key: newKey
+    wait: true
+    monitoring: true
+    wait_for_stats: true
+    metric: MyPlugin
+    python_file: /home/user/plugin.py
 '''
 
 
