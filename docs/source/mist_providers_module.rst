@@ -1,6 +1,3 @@
-.. _mist_providers:
-
-
 mist_providers - Lists all available providers supported by the mist.io service
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

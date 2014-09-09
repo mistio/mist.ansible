@@ -1,6 +1,3 @@
-.. _mist_locations:
-
-
 mist_locations - Lists all available locations/regions for a backend
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

@@ -1,6 +1,3 @@
-.. _mist_keys:
-
-
 mist_keys - Manage ssh-keys from mist.io service
 ++++++++++++++++++++++++++++++++++++++++++++++++
 

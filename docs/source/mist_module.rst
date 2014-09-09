@@ -1,6 +1,3 @@
-.. _mist:
-
-
 mist - Provision, monitor and manage machines with the mist.io service
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

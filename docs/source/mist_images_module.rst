@@ -1,6 +1,3 @@
-.. _mist_images:
-
-
 mist_images - Lists all available OS images for a backend
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

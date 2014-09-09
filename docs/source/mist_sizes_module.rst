@@ -1,6 +1,3 @@
-.. _mist_sizes:
-
-
 mist_sizes - Lists all available machine sizes for a backend
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
