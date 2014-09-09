@@ -58,7 +58,7 @@ options:
       - If I(save_locally), the local save path will be used to save the key
     default: "~/.ssh"
     required: false
-author: "Chris Loukas <commixon@gmail.com>"
+author: "Mist.io Inc"
 version_added: "1.7.1"
 
 '''
@@ -161,15 +161,10 @@ def list_keys(module, client):
         save_locally = module.params.get('save_locally')
         local_save_path = module.params.get('local_save_path')
 
-        private_path = os.path.join(local_save_path, key.id)
-        public_path = os.path.join(local_save_path, key.id + ".pub")
-        if save_locally and not os.path.isfile(private_path):
+        if save_locally and local_save_path:
             private = key.private
-            public = key.public
-            with open(private_path, "w") as f:
+            with open(local_save_path, "w") as f:
                 f.write(private)
-            with open(public_path, "w") as f:
-                f.write(public)
             changed = True
         module.exit_json(changed=changed, info=result, private=key.private, public=key.public)
 
@@ -216,9 +211,6 @@ def add_key(module, client):
     local_save_path = module.params.get('local_save_path')
     key_name = module.params.get('name')
 
-    private_path = os.path.join(local_save_path, key_name)
-    public_path = os.path.join(local_save_path, key_name + ".pub")
-
     if auto_generate:
         private = client.generate_key()
     else:
@@ -229,19 +221,14 @@ def add_key(module, client):
     client.update_keys()
     key = client.keys[key_name]
 
-    if save_locally and not os.path.isfile(private_path):
-        with open(private_path, "w") as f:
+    if save_locally and local_save_path:
+        with open(local_save_path, "w") as f:
             f.write(key.private)
-        with open(public_path, "w") as f:
-            f.write(key.public)
 
     return key
 
 
 def main():
-    home_path = os.getenv('HOME')
-    save_path = os.path.join(home_path, '.ssh')
-
     module = AnsibleModule(
         argument_spec=dict(
             mist_uri=dict(default='https://mist.io', type='str'),
@@ -252,7 +239,7 @@ def main():
             name=dict(required=False, type='str'),
             auto_generate=dict(required=False, default=False, type='bool'),
             save_locally=dict(required=False, default=False, type='bool'),
-            local_save_path=dict(required=False, default=save_path, type='str'),
+            local_save_path=dict(required=False, type='str'),
         )
     )
 

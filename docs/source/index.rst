@@ -6,7 +6,7 @@
 Welcome to mist.ansible's documentation!
 ========================================
 
-:Version: 0.1.0
+:Version: 0.1.6
 :Author: Mist.io Inc
 :Source: https://github.com/mistio/mist.ansible
 :License: GPL v3

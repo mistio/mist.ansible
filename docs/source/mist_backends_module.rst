@@ -1,6 +1,3 @@
-.. _mist_backends:
-
-
 mist_backends - Manage backends in the mist.io service
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 

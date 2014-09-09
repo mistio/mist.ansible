@@ -90,7 +90,26 @@ options:
       - If I(True), it will wait for the monitoring stats to start
     default: False
     required: false
-author: "Chris Loukas <commixon@gmail.com>"
+  metric:
+    description:
+        - It will be either the metric id for the supported metrics, or the name in case I(python_file) is provided
+        - I(wait_for_stats) needs to be true
+    required: False
+  python_file:
+    description:
+        - This is the path of a python file in case you want to add a custom python metric
+    required: False
+  value_type:
+    description:
+        - What type of value has the plugin
+    choices: ["gauge", "derive"]
+    default: gauge
+    required: False
+  unit:
+    description:
+        - The unit of the metric you add. Can be left none
+    required: False
+author: "Mist.io Inc"
 version_added: "1.7.1"
 
 '''
@@ -130,6 +149,19 @@ EXAMPLES = '''
     name: dbServer
   register: machine
 
+- name: Enable monitoring and add custom plugin.py
+  mist:
+    mist_email: your@email.com
+    mist_password: yourpassword
+    backend: EC2
+    name: dbServer
+    state: present
+    key: newKey
+    wait: true
+    monitoring: true
+    wait_for_stats: true
+    metric: MyPlugin
+    python_file: /home/user/plugin.py
 '''
 
 
@@ -211,8 +243,29 @@ def list_machines(module, client):
     else:
         info = result
 
-
     module.exit_json(changed=False, info=info)
+
+
+def handle_metrics(module, machine):
+    took_action = False
+    metric = module.params.get('metric')
+    python_file = module.params.get('python_file')
+    value_type = module.params.get('value_type')
+    unit = module.params.get('unit')
+
+    if python_file and not metric:
+        module.fail_json(msg="You have to provide metric id")
+
+    if python_file:
+        machine.add_python_plugin(name=metric, python_file=python_file, value_type=value_type, unit=unit)
+        took_action = True
+        return took_action
+    elif metric:
+        machine.add_metric(metric)
+        took_action = True
+        return took_action
+
+    return took_action
 
 
 def machine_action(module, client):
@@ -229,8 +282,12 @@ def machine_action(module, client):
         change = False
         monitoring = module.params.get('monitoring')
         if monitoring:
-            machine.enable_monitoring()
-            change = True
+            try:
+                machine.enable_monitoring()
+                change = True
+            except:
+                pass
+            change = handle_metrics(module, machine)
 
         info = machine.info
         network_interfaces = info['extra'].get('network_interfaces', None)
@@ -323,6 +380,8 @@ def create_machine(module, client, backend):
                 backend.update_machines()
                 machine = backend.search_machine(machine_name)
 
+    if monitoring and wait_for_stats:
+        handle_metrics(module, machine)
     return machine
 
 
@@ -338,13 +397,17 @@ def main():
             size_id=dict(required=False, type='str'),
             location_id=dict(required=False, type='str'),
             key=dict(required=False, type='str'),
-            image_extra=dict(required=False, type='str'),
-            disk=dict(required=False, type='str'),
+            image_extra=dict(required=False),
+            disk=dict(required=False, type='int'),
             name=dict(required=False, type='str'),
             wait=dict(required=False, default=False, type='bool'),
             wait_time=dict(required=False, default=600, type='int'),
             monitoring=dict(required=False, type='bool', default=False),
-            wait_for_stats=dict(required=False, type='bool', default=False)
+            wait_for_stats=dict(required=False, type='bool', default=False),
+            metric=dict(required=False, type='str'),
+            python_file=dict(required=False, type='str'),
+            unit=dict(required=False, type='str'),
+            value_type=dict(required=False, type='str', default='gauge', choices=["gauge", "derive"])
         )
     )
 
@@ -358,7 +421,5 @@ def main():
         list_machines(module, client)
     else:
         machine_action(module, client)
-
-
 
 main()

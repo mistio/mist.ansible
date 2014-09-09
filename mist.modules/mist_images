@@ -41,7 +41,7 @@ options:
       - If I(all) is provided, will return ALL available OS images
       - If I(other search term) then it will search for specific images
     required: true
-author: "Chris Loukas <commixon@gmail.com>"
+author: "Mist.io Inc"
 version_added: "1.7.1"
 
 '''
