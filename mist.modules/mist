@@ -211,8 +211,29 @@ def list_machines(module, client):
     else:
         info = result
 
-
     module.exit_json(changed=False, info=info)
+
+
+def handle_metrics(module, machine):
+    took_action = False
+    metric = module.params.get('metric')
+    python_file = module.params.get('python_file')
+    value_type = module.params.get('value_type')
+    unit = module.params.get('unit')
+
+    if python_file and not metric:
+        module.fail_json(msg="You have to provide metric id")
+
+    if python_file:
+        machine.add_python_plugin(name=metric, python_file=python_file, value_type=value_type, unit=unit)
+        took_action = True
+        return took_action
+    elif metric:
+        machine.add_metric(metric)
+        took_action = True
+        return took_action
+
+    return took_action
 
 
 def machine_action(module, client):
@@ -231,6 +252,7 @@ def machine_action(module, client):
         if monitoring:
             machine.enable_monitoring()
             change = True
+            change = handle_metrics(module, machine)
 
         info = machine.info
         network_interfaces = info['extra'].get('network_interfaces', None)
@@ -344,7 +366,11 @@ def main():
             wait=dict(required=False, default=False, type='bool'),
             wait_time=dict(required=False, default=600, type='int'),
             monitoring=dict(required=False, type='bool', default=False),
-            wait_for_stats=dict(required=False, type='bool', default=False)
+            wait_for_stats=dict(required=False, type='bool', default=False),
+            metric=dict(required=False, type='str'),
+            python_file=dict(required=False, type='str'),
+            unit=dict(required=False, type='str'),
+            value_type=dict(required=False, type='str', default='gauge', choices=["gauge", "derive"])
         )
     )
 
@@ -358,7 +384,5 @@ def main():
         list_machines(module, client)
     else:
         machine_action(module, client)
-
-
 
 main()
