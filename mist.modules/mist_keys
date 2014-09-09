@@ -161,15 +161,10 @@ def list_keys(module, client):
         save_locally = module.params.get('save_locally')
         local_save_path = module.params.get('local_save_path')
 
-        private_path = os.path.join(local_save_path, key.id)
-        public_path = os.path.join(local_save_path, key.id + ".pub")
-        if save_locally and not os.path.isfile(private_path):
+        if save_locally and local_save_path:
             private = key.private
-            public = key.public
-            with open(private_path, "w") as f:
+            with open(local_save_path, "w") as f:
                 f.write(private)
-            with open(public_path, "w") as f:
-                f.write(public)
             changed = True
         module.exit_json(changed=changed, info=result, private=key.private, public=key.public)
 
