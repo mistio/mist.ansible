@@ -49,7 +49,7 @@ options:
       - By default I(all), which returns all supported providers by the mist.io service.
       - You can explicitly set it to one of the choices to see only this provider-specific information
     required: false
-author: "Chris Loukas <commixon@gmail.com>"
+author: "Mist.io Inc"
 version_added: "1.7.1"
 '''
 

@@ -36,7 +36,7 @@ options:
     description:
       - Can be either backend's id or name
     required: true
-author: "Chris Loukas <commixon@gmail.com>"
+author: "Mist.io Inc"
 version_added: "1.7.1"
 
 '''

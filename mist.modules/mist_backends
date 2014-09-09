@@ -100,7 +100,7 @@ options:
   backend:
     description:
       - Can be either he backend's name or id. To be used when listing info for backends.
-author: "Chris Loukas <commixon@gmail.com>"
+author: "Mist.io Inc"
 version_added: "1.7.1"
 
 '''

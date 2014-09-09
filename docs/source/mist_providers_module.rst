@@ -4,7 +4,7 @@
 mist_providers - Lists all available providers supported by the mist.io service
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-:Author: Chris Loukas <commixon@gmail.com>
+:Author: Mist.io Inc
 
 .. contents::
    :local:

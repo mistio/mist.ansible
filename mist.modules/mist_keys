@@ -58,7 +58,7 @@ options:
       - If I(save_locally), the local save path will be used to save the key
     default: "~/.ssh"
     required: false
-author: "Chris Loukas <commixon@gmail.com>"
+author: "Mist.io Inc"
 version_added: "1.7.1"
 
 '''
