@@ -221,7 +221,7 @@ def add_key(module, client):
     client.update_keys()
     key = client.keys[key_name]
 
-    if save_locally and not local_save_path:
+    if save_locally and local_save_path:
         with open(local_save_path, "w") as f:
             f.write(key.private)
 
