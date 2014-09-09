@@ -214,6 +214,7 @@ Examples
       register: machine
     
     - name: Enable monitoring and add custom plugin.py
+      mist:
         mist_email: your@email.com
         mist_password: yourpassword
         backend: EC2
