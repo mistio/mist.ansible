@@ -4,7 +4,7 @@
 mist - Provision, monitor and manage machines with the mist.io service
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-:Author: Mist.io Inc
+:Author: Chris Loukas <commixon@gmail.com>
 
 .. contents::
    :local:
@@ -69,6 +69,13 @@ Options
         <td>Id of the location/region you want to provision your machine to</td>
     </tr>
             <tr>
+    <td>metric</td>
+    <td>no</td>
+    <td></td>
+        <td><ul></ul></td>
+        <td>It will be either the metric id for the supported metrics, or the name in case <em>python_file</em> is provided<em>wait_for_stats</em> needs to be true</td>
+    </tr>
+            <tr>
     <td>mist_email</td>
     <td>no</td>
     <td></td>
@@ -104,6 +111,13 @@ Options
         <td>The name you want the machine to have</td>
     </tr>
             <tr>
+    <td>python_file</td>
+    <td>no</td>
+    <td></td>
+        <td><ul></ul></td>
+        <td>This is the path of a python file in case you want to add a custom python metric</td>
+    </tr>
+            <tr>
     <td>size_id</td>
     <td>no</td>
     <td></td>
@@ -116,6 +130,20 @@ Options
     <td></td>
         <td><ul><li>present</li><li>absent</li></ul></td>
         <td>If provided it will instruct the module to trigger machine actions, otherwise it will only list information</td>
+    </tr>
+            <tr>
+    <td>unit</td>
+    <td>no</td>
+    <td></td>
+        <td><ul></ul></td>
+        <td>The unit of the metric you add. Can be left none</td>
+    </tr>
+            <tr>
+    <td>value_type</td>
+    <td>no</td>
+    <td>gauge</td>
+        <td><ul><li>gauge</li><li>derive</li></ul></td>
+        <td>What type of value has the plugin</td>
     </tr>
             <tr>
     <td>wait</td>
@@ -188,4 +216,16 @@ Examples
         name: dbServer
       register: machine
     
+    - name: Enable monitoring and add custom plugin.py
+        mist_email: your@email.com
+        mist_password: yourpassword
+        backend: EC2
+        name: dbServer
+        state: present
+        key: newKey
+        wait: true
+        monitoring: true
+        wait_for_stats: true
+        metric: MyPlugin
+        python_file: /home/user/plugin.py
 

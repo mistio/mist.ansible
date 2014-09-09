@@ -4,7 +4,7 @@
 mist_images - Lists all available OS images for a backend
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-:Author: Mist.io Inc
+:Author: Chris Loukas <commixon@gmail.com>
 
 .. contents::
    :local:
@@ -17,7 +17,7 @@ Synopsis
 
 Returns a list of all available OS images that the given backend supports.
 *mist_email* and *mist_password* can be skipped if *~/.mist* config file is present.
-See mist.client documentation for config file http://mistclient.readthedocs.org/en/latest/cmd/cmd.html
+See mist.client documentation for config file http://mistclient.readthedocs.org/en/latest/cmd/cmd.html.
 
 Options
 -------

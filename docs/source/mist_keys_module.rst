@@ -4,7 +4,7 @@
 mist_keys - Manage ssh-keys from mist.io service
 ++++++++++++++++++++++++++++++++++++++++++++++++
 
-:Author: Mist.io Inc
+:Author: Chris Loukas <commixon@gmail.com>
 
 .. contents::
    :local:
