@@ -250,8 +250,11 @@ def machine_action(module, client):
         change = False
         monitoring = module.params.get('monitoring')
         if monitoring:
-            machine.enable_monitoring()
-            change = True
+            try:
+                machine.enable_monitoring()
+                change = True
+            except:
+                pass
             change = handle_metrics(module, machine)
 
         info = machine.info
@@ -345,6 +348,8 @@ def create_machine(module, client, backend):
                 backend.update_machines()
                 machine = backend.search_machine(machine_name)
 
+    if monitoring and wait_for_stats:
+        handle_metrics(module, machine)
     return machine
 
 
