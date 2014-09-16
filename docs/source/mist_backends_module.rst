@@ -69,7 +69,7 @@ Options
     <td>no</td>
     <td></td>
         <td><ul></ul></td>
-        <td>This is either the password, api_secret tokenetc, depending on the provider. For Linode and DigitalOcean only this one is needed.</td>
+        <td>This is either the password, api_secret token etc, depending on the provider. For Linode and DigitalOcean only this one is needed.</td>
     </tr>
             <tr>
     <td>compute_endpoint</td>
