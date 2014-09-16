@@ -65,11 +65,11 @@ Options
         <td>This is either the username, api_key etc, depending on the provider</td>
     </tr>
             <tr>
-    <td>backend_password</td>
+    <td>backend_secret</td>
     <td>no</td>
     <td></td>
         <td><ul></ul></td>
-        <td>This is either the password, api_secret etc, depending on the provider</td>
+        <td>This is either the password, api_secret tokenetc, depending on the provider. For Linode and DigitalOcean only this one is needed.</td>
     </tr>
             <tr>
     <td>compute_endpoint</td>
