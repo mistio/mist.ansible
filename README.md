@@ -18,13 +18,12 @@ Simple Example of Provisioning
 - name: Provisioning playbook for digitalocean
   hosts: localhost
   tasks:
-  - name: nephoscale is present
+  - name: Ensure DigitalOcean backend is present
     mist_backends:
       mist_email: yourmist@account.com
       mist_password: yourmistpassword
       provider: digitalocean
       state: present
-      backend_key: digital_client_id
       backend_secret: digital_secret_key
       name: DigitalBackend
   - name: Create Machine
