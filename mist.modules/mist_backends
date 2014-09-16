@@ -65,9 +65,9 @@ options:
     description:
       - This is either the username, api_key etc, depending on the provider
     required: false
-  backend_password:
+  backend_secret:
     description:
-      - This is either the password, api_secret etc, depending on the provider
+      - This is either the password, api_secret, token etc, depending on the provider. For Linode and DigitalOcean only this one is needed
     required: false
   api_url:
     description:
@@ -110,10 +110,9 @@ EXAMPLES = '''
   mist_backends:
     mist_email: your@email.com
     mist_password: yourpassword
-    name: NephoScale
-    provider: nephoscale
-    backend_key: 908dfjokjkma0hgj9809uj
-    backend_secret: kjhf98y9lkj0909kj90
+    name: DigitalOcean
+    provider: digitalocean
+    backend_secret: kjhf98y9lkj0909kj90edffwwf432fd
     state: present
 
 - name: List information about DigitalOcean backend
