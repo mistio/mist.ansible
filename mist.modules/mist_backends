@@ -110,9 +110,9 @@ EXAMPLES = '''
   mist_backends:
     mist_email: your@email.com
     mist_password: yourpassword
-    name: DigitalOcena
-    provider: digitalocena
-    backend_secret: kjhf98y9lkj0909kj90
+    name: DigitalOcean
+    provider: digitalocean
+    backend_secret: kjhf98y9lkj0909kj90edffwwf432fd
     state: present
 
 - name: List information about DigitalOcean backend
