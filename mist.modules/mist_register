@@ -46,14 +46,14 @@ def update_registry(file_name, var, value):
 def main():
     module = AnsibleModule(
         argument_spec=dict(
-            file=dict(required=False, type='str', default="output.json"),
-            var=dict(required=True, type='str'),
+            dest=dict(required=False, type='str', default="output.json"),
+            key=dict(required=True, type='str'),
             value=dict(required=True),
         )
     )
 
-    file_name = module.params.get('file')
-    var = module.params.get('var')
+    file_name = module.params.get('dest')
+    var = module.params.get('key')
     value = module.params.get('value')
 
     file_changed = ensure_file_present(file_name)
