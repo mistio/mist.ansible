@@ -280,7 +280,10 @@ def machine_action(module, client):
 
     if machine_state == "present" and desired_state == "present":
         change = False
+        wait_time = module.params.get('wait_time')
         monitoring = module.params.get('monitoring')
+        wait_for_stats = module.params.get('wait_for_stats')
+
         if monitoring:
             try:
                 machine.enable_monitoring()
@@ -288,6 +291,18 @@ def machine_action(module, client):
             except:
                 pass
             change = handle_metrics(module, machine)
+
+        if monitoring and wait_for_stats:
+            start_time = time.time()
+            while time.time() < start_time + wait_time:
+                try:
+                    time.sleep(15)
+                    stats = machine.get_stats()
+                    if stats:
+                        break
+                except:
+                    backend.update_machines()
+                    machine = backend.search_machine(machine_name)
 
         info = machine.info
         network_interfaces = info['extra'].get('network_interfaces', None)
