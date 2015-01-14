@@ -60,13 +60,13 @@ def readme():
 
 
 requires = [
-    'mist.client>=0.1.0',
+    'mist>=0.3.1',
 ]
 
 
 setup(
     name='mist.ansible',
-    version='0.1.8',
+    version='2.0',
     description='Ansible modules for the mist.io service',
     long_description=readme(),
     classifiers=[
